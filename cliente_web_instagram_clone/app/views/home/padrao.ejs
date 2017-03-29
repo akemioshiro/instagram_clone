@@ -17,6 +17,8 @@
 		<script>
 			$(document).ready(function(){
 
+				carrega_postagens();
+
 				$('#btn_incluir').click(function(){
 					$('#container_timeline').hide();
 					$('#container_form').show();
@@ -26,6 +28,35 @@
 					$('#container_timeline').show();
 					$('#container_form').hide();
 					return false;
+				});
+
+				$("#btn-publicar").click(function(){
+					// criar um formData
+					var formData = new FormData();
+
+					var arquivo = document.getElementById("arquivo").files[0];
+					var titulo = document.getElementById("titulo").value;
+
+					formData.append("arquivo", arquivo);
+					formData.append("titulo", titulo);
+
+					// criar o xmlhttprequest
+					var xhr = new XMLHttpRequest();
+
+					// verificar mudanças de status
+					xhr.onreadystatechange = function()
+					{
+						if(xhr.readyState == 4)
+						{
+							var resposta = xhr.responseText;
+							document.getElementById("mensagem").innerHtml = resposta;
+						}
+					}
+
+
+					// fazer o envio do nosso request
+					xhr.open("POST","http://localhost:97/api"); // para onde o bodyrequest envia
+					xhr.send(formData); // conteudo do bodyrequest
 				});
 
 			});

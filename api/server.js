@@ -1,13 +1,16 @@
 var express = require("express"),
 	bodyParser = require("body-parser"),
-	mongodb = require("mongodb")
-	objectId = require('mongodb').ObjectId; // fazer esta importação da biblioteca mongodb. ex: para comparar ids que devem ser objetos
+	multiparty = require("connect-multiparty"),
+	mongodb = require("mongodb"),
+	objectId = require('mongodb').ObjectId,
+	fs = require("fs"); // fazer esta importação da biblioteca mongodb. ex: para comparar ids que devem ser objetos
 
 var app = express();
 
 // body-parser - configurado como middlaew da aplicação
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
+app.use(multiparty());
 
 var port=97;
 
@@ -31,22 +34,47 @@ app.get("/", function(req, res){
 // POST (Criar)
 app.post("/api", function(req, res){
 
-	var dados = req.body;
+	//res.setHeader("Access-Control-Allow-Origin","http://localhost:98");
+	res.setHeader("Access-Control-Allow-Origin","*");
+
+	var date = new Date();
+	var time_stamp = date.getTime();
+	var url_imagem = time_stamp + "_" + req.files.arquivo.originalFilename;
+
+	var path_origem = req.files.arquivo.path;
+	var path_destino = './uploads/' + url_imagem;
 	
-	db.open(function(err, mongoclient){
-		mongoclient.collection("postagens", function(err, collection){
-			collection.insert(dados, function(err, records){
-				if(err)
-				{
-					res.json({'status':'erro'});
-				}
-				else{
-					res.status(200).json({'status':'inclusão realizada com sucesso'});
-				}
-				mongoclient.close();
+
+	fs.rename(path_origem, path_destino, function(err){
+		if(err)
+		{
+			res.status(500).json({error:err});
+			return;
+		}
+
+		var dados = {
+			url_imagem: url_imagem,
+			titulo: req.body.titulo
+		};
+		
+		db.open(function(err, mongoclient){
+			mongoclient.collection("postagens", function(err, collection){
+				collection.insert(dados, function(err, records){
+					if(err)
+					{
+						res.json({'status':'erro'});
+					}
+					else{
+						res.status(200).json({'status':'inclusão realizada com sucesso'});
+					}
+					mongoclient.close();
+				});
 			});
-		});
+		});		
+		
 	});
+
+
 });
 
 // GET (Ler)
